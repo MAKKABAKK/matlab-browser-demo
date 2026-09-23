@@ -8,11 +8,13 @@ let wasm;
 async function loadWasm(send) {
   const response = await fetch(new URL('../vendor/runmat/pkg-web/runmat_wasm_web_bg.wasm', self.location.href));
   if (!response.ok) throw new Error(`计算资源加载失败（${response.status}），请检查网络后重试。`);
-  const total = Number(response.headers.get('Content-Length')) || 0;
+  const encoding = response.headers.get('Content-Encoding');
+  const total = encoding && encoding !== 'identity' ? 0 : Number(response.headers.get('Content-Length')) || 0;
   if (!response.body || !WebAssembly.compileStreaming) return WebAssembly.compile(await response.arrayBuffer());
   const reader = response.body.getReader();
   let loaded = 0;
   let lastPercent = -1;
+  let reportedBytes = 0;
   const stream = new ReadableStream({
     async pull(controller) {
       try {
@@ -20,7 +22,9 @@ async function loadWasm(send) {
         if (done) { controller.close(); return; }
         loaded += value.byteLength;
         const percent = total ? Math.min(100, Math.floor(100 * loaded / total)) : null;
-        if (percent !== lastPercent) { send('progress', { percent, loaded }); lastPercent = percent; }
+        if (percent !== lastPercent || (percent === null && loaded - reportedBytes >= 500000)) {
+          send('progress', { percent, loaded }); lastPercent = percent; reportedBytes = loaded;
+        }
         controller.enqueue(value);
       } catch (error) { controller.error(error); }
     },

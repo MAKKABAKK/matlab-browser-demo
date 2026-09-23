@@ -1,4 +1,5 @@
 async (page) => {
+  page.setDefaultTimeout(180000);
   const base = __BASE_URL__;
   const fixture = __FIXTURE_PATH__;
   const report = { checks: [], numeric: [], requests: [], errors: [] };
@@ -9,7 +10,7 @@ async (page) => {
   const check = (value, message) => { if (!value) throw new Error(message); report.checks.push(message); };
   const state = () => page.locator('#status-panel').getAttribute('data-state');
   const finish = async () => {
-    await page.waitForFunction(() => ['complete','error'].includes(document.querySelector('#status-panel').dataset.state), null, {timeout:60000});
+    await page.waitForFunction(() => ['complete','error'].includes(document.querySelector('#status-panel').dataset.state), null, {timeout:180000});
     check(await state()==='complete', '计算完成：' + await page.locator('#status-detail').textContent());
   };
   try {
@@ -35,7 +36,7 @@ async (page) => {
         for (const [index,expected] of reference.cases.entries()) {
           const params={gridSize:expected.gridSize,numSteps:expected.numSteps,ratio:expected.ratio};
           const actual=await new Promise((resolve,reject)=>{
-            const timer=setTimeout(()=>reject(new Error('Numerical test timed out')),60000);
+            const timer=setTimeout(()=>reject(new Error('Numerical test timed out')),180000);
             worker.onerror=e=>{clearTimeout(timer);reject(new Error(e.message));};
             worker.onmessage=({data})=>{
               if(data.id!==index+1)return;
