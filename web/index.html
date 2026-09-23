@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="在你的浏览器里运行 MATLAB 热扩散代码，观察温度如何随时间变化。无需安装软件。">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <title>热扩散实验室 · MATLAB 浏览器 Demo</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./js/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#parameters">跳至模拟参数</a>
+  <div class="page">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="热扩散实验室首页"><span class="brand-mark" aria-hidden="true">∿</span><span>数值实验室<span class="brand-divider">/</span><small>浏览器 Demo</small></span></a>
+      <span class="local-badge"><span aria-hidden="true"></span>在你的设备上计算</span>
+    </header>
+    <main>
+      <nav aria-label="实验导航"><a href="./random.html">实验 02 · 正态随机数 →</a></nav>
+      <section class="intro">
+        <div><p class="eyebrow">实验 01 <span>—</span> 二维热扩散</p><h1>看见热量的流动<span>。</span></h1><p class="lead">从两个热点开始，观察温度如何逐渐均匀。<br>调整参数，在浏览器中运行真实的 MATLAB 代码。</p></div>
+        <a class="source-link" href="#source">查看 .m 源码 <span aria-hidden="true">↗</span></a>
+      </section>
+      <div class="workspace">
+        <aside class="controls card">
+          <div class="panel-heading"><span class="section-number">01</span><h2 id="parameters">设置模拟</h2></div>
+          <form id="simulation-form" novalidate>
+            <fieldset id="parameter-fields">
+              <legend class="sr-only">热扩散参数</legend>
+              <div class="field"><label for="gridSize">网格大小 <span>每边节点数</span></label><div class="number-field"><input id="gridSize" name="gridSize" type="number" min="11" max="81" step="1" value="61" required aria-describedby="grid-hint"><span>× <b id="grid-repeat">61</b></span></div><p id="grid-hint" class="hint">11–81；网格越密，计算量越大</p></div>
+              <div class="field"><label for="numSteps">模拟步数 <span>时间推进次数</span></label><div class="number-field"><input id="numSteps" name="numSteps" type="number" min="1" max="500" step="1" value="300" required aria-describedby="steps-hint"><span>步</span></div><p id="steps-hint" class="hint">1–500；步数越多，热量扩散越充分</p></div>
+              <div class="field"><label for="ratio">扩散系数 <span>无量纲步长比</span></label><div class="number-field"><input id="ratio" name="ratio" type="number" min="0.01" max="0.25" step="any" value="0.20" required aria-describedby="ratio-hint"><span>r</span></div><p id="ratio-hint" class="hint">0.01–0.25；保持显式计算稳定</p></div>
+              <div class="fixed-value"><span>边界 / 环境温度</span><strong>20 <small>°C</small></strong></div>
+            </fieldset>
+            <p id="validation-error" class="validation-error" role="alert" hidden></p>
+            <div class="actions"><button id="run" class="primary" type="submit"><span aria-hidden="true">▶</span> <span id="run-label">运行模拟</span></button><button id="stop" class="stop" type="button" hidden>停止</button></div>
+            <button id="reset" class="text-button" type="button">恢复默认参数</button>
+          </form>
+          <div class="load-note"><span aria-hidden="true">↓</span><p>首次运行会自动加载约 69 MB 的计算资源，无需安装软件。</p></div>
+          <div class="method-note"><h3>这个实验如何工作？</h3><p>每一步，网格节点与上下左右相邻节点交换热量。边界始终保持 20°C。</p><p>计算来自 <code>.m</code> 源码，图表由浏览器根据计算结果绘制。</p></div>
+        </aside>
+        <section class="results" aria-label="模拟结果">
+          <div id="status-panel" class="status-panel" data-state="idle" role="status" aria-live="polite"><span class="status-icon" aria-hidden="true"></span><div><strong id="status-title">准备就绪</strong><p id="status-detail">设置参数，点击「运行模拟」开始实验。</p></div><span id="run-time" class="run-time"></span></div>
+          <progress id="load-progress" max="100" value="0" aria-label="计算资源加载进度" hidden></progress>
+          <div id="result-body" data-ready="false">
+            <div class="metrics">
+              <div class="metric"><span>初始峰值温度</span><strong id="initial-peak">—</strong><small>°C</small></div>
+              <div class="metric"><span>最终峰值温度</span><strong id="final-peak">—</strong><small>°C</small></div>
+              <div class="metric"><span>剩余相对热能</span><strong id="energy">—</strong><small>%</small></div>
+            </div>
+            <section class="card thermal-card">
+              <div class="chart-heading"><div><p class="eyebrow">温度分布</p><h2>从集中到扩散</h2></div><span id="result-summary" class="chart-tag">等待计算</span></div>
+              <div class="heatmaps">
+                <figure><figcaption><strong>初始状态</strong><span>第 0 步</span></figcaption><div class="heatmap-frame"><canvas id="initial-map" width="320" height="320" role="img" aria-label="运行后显示初始温度热力图"></canvas><div class="empty-map"><span>＋</span><p>运行后显示温度分布</p></div></div></figure>
+                <figure><figcaption><strong>扩散之后</strong><span id="final-step">第 — 步</span></figcaption><div class="heatmap-frame"><canvas id="final-map" width="320" height="320" role="img" aria-label="运行后显示最终温度热力图"></canvas><div class="empty-map"><span>＋</span><p>运行后显示温度分布</p></div></div></figure>
+              </div>
+              <div class="color-key"><span>20°C</span><div class="color-ramp" aria-hidden="true"></div><span id="color-max">峰值温度</span></div>
+              <p class="chart-footnote">两幅图使用相同色标，暖色表示更高温度。横纵方向均为网格位置。</p>
+            </section>
+            <section class="card trend-card">
+              <div class="chart-heading"><div><p class="eyebrow">温度随步数变化</p><h2>观察冷却过程</h2></div><div class="legend"><span><i class="peak-line"></i>峰值</span><span><i class="mean-line"></i>平均值</span></div></div>
+              <div class="trend-frame"><svg id="trend" viewBox="0 0 720 230" role="img" aria-label="运行后显示温度变化曲线"></svg><div class="empty-trend">计算完成后显示温度变化曲线</div></div>
+              <p id="cooling-note" class="chart-footnote">相对环境温度的峰值降低一半所需步数，将在计算后显示。</p>
+            </section>
+          </div>
+        </section>
+      </div>
+      <section id="source" class="source-section card">
+        <div class="chart-heading"><div class="panel-heading"><span class="section-number">02</span><h2>计算背后的 MATLAB 代码</h2></div><span class="chart-tag">只读源码</span></div>
+        <p class="source-description">以下文件就是浏览器执行的代码。这个 Demo 只验证热扩散案例，不代表完整 MATLAB 或所有工具箱都受支持。</p>
+        <label class="sr-only" for="source-file">选择源码文件</label><select id="source-file"><option value="heat_demo.m">heat_demo.m · 计算入口</option><option value="initial_temperature_demo.m">initial_temperature_demo.m · 初始温度</option><option value="simulate_heat_diffusion_demo.m">simulate_heat_diffusion_demo.m · 扩散算法</option></select>
+        <pre tabindex="0" aria-label="MATLAB 源码"><code id="source-code">正在加载源码…</code></pre>
+      </section>
+    </main>
+    <footer><span>数值实验室 <b>·</b> 独立测试 Demo</span><span>MATLAB 语法运行器：RunMat 0.6.2 <b>·</b> 本地计算，无需登录</span></footer>
+  </div>
+  <noscript>请启用 JavaScript，才能在浏览器中执行模拟并显示图表。</noscript>
+</body>
+</html>

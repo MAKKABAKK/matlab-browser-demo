@@ -1,0 +1,9 @@
+RunMat 0.6.2
+Copyright 2024-2026 Dystr, Inc. and RunMat contributors
+https://github.com/runmat-org/runmat
+Apache License 2.0 — see RUNMAT-LICENSE.txt.
+
+This site distributes the published RunMat browser runtime without modification.
+The editor language server and TypeScript declarations are omitted from the build.
+RunMat is not affiliated with, endorsed by, or sponsored by The MathWorks, Inc.
+MATLAB is a trademark of The MathWorks, Inc.
