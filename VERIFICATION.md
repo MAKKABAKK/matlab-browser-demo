@@ -31,4 +31,18 @@
 
 ## 验证边界
 
-尚未创建新的 GitHub 仓库或在 GitHub Pages 上实际部署。已通过本地仓库子路径下的静态托管验证，并提供发布工作流。验证结论针对本 Demo 的热扩散代码，不代表任意 MATLAB 程序都兼容。
+已创建独立仓库 [MAKKABAKK/matlab-browser-demo](https://github.com/MAKKABAKK/matlab-browser-demo)，并通过 GitHub Actions 发布到 GitHub Pages。验证结论只针对本 Demo 的热扩散和正态随机数代码，不代表任意 MATLAB 程序都兼容。
+
+## 2026-09-23：正态随机数接入与线上部署
+
+- 新仓库：https://github.com/MAKKABAKK/matlab-browser-demo
+- 正态随机数页面：https://makkabakk.github.io/matlab-browser-demo/random.html
+- 网站通过 GitHub Actions 构建和部署；原有网站未改动。
+- 本地 Chrome、WebKit 正态随机数各 16 项验收通过：100 个有限样本、均值独立重算、100 个图表数据点、重新生成不同样本、资源加载后离线运行、停止、源码 HTTP 503 后恢复、手机布局、同源请求和无未处理页面错误。
+- GitHub Pages 上 WebKit 正态随机数完整 16 项通过。Chrome 在线正常运行、独立均值校验、绘图、离线重新生成、手机布局和停止通过；最后一次下载遇到 `Failed to fetch`，页面显示错误。随后单独点击重试恢复成功，返回 100 个样本，记录于 `output/playwright/chrome-random-remote/recovery.json`。不将首次网络失败的整轮报告记为全通过。
+- 热扩散本地 Chrome 28 项回归重新通过；GitHub Pages 上 WebKit 的四组完整数值共 26,380 个值全部与 MATLAB R2026a 基准一致。线上额外的重复下载压力检查也遇到网络失败，未宣称该整轮通过。
+- 发布代码修复了 GitHub 压缩响应下下载进度提前达到 100% 的问题；压缩传输显示实际已加载数据量。测试等待时间与页面的 180 秒初始化时限保持一致。
+- 线上首次下载在本次网络环境约需 1–2 分钟；运行器仍须自动下载，用户无需手动安装。连续重新生成可复用内存中的运行器。
+- 线上报告目录带 `-remote` 后缀，与本地报告分开。测试脚本同样隔离本地和线上会话；建议依次运行，避免同时下载多份运行器影响加载时间。
+
+本案例保留 `normrnd(0, sigma2)`、循环 100 次和 `mean(X)`，其中 `sigma2=3` 表示标准差。执行版本只将 `plot(X)` 改为网页绘图；原始文件另存。随机样本不与 MATLAB 的随机序列逐项比较。

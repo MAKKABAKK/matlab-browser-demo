@@ -10,9 +10,10 @@ parser.add_argument('--url', default='http://127.0.0.1:4173/matlab-browser-demo/
 parser.add_argument('--suite', choices=['heat', 'random'], default='heat')
 args = parser.parse_args()
 root = Path(__file__).resolve().parent.parent
-output = root / 'output' / 'playwright' / (args.browser + ('-random' if args.suite == 'random' else ''))
+remote = args.url.startswith('https://')
+output = root / 'output' / 'playwright' / (args.browser + ('-random' if args.suite == 'random' else '') + ('-remote' if remote else ''))
 output.mkdir(parents=True, exist_ok=True)
-cli = ['npx', '--yes', '--package', '@playwright/cli', 'playwright-cli', '-s=' + args.suite + '-' + args.browser]
+cli = ['npx', '--yes', '--package', '@playwright/cli', 'playwright-cli', '-s=' + args.suite + '-' + args.browser + ('-remote' if remote else '')]
 
 def run(*arguments):
     result = subprocess.run(cli + list(arguments), cwd=root, text=True, capture_output=True)
@@ -35,6 +36,8 @@ try:
         report = json.loads(report)
 except json.JSONDecodeError:
     raise SystemExit('Cannot read browser report. See ' + str(output / 'cli.log'))
+report['url'] = args.url
+report['suite'] = args.suite
 (output / 'report.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
 print(json.dumps({key: report.get(key) for key in ['passed', 'failure', 'checks', 'numeric']}, ensure_ascii=False, indent=2))
 raise SystemExit(0 if report.get('passed') else 1)
