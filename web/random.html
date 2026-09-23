@@ -13,7 +13,7 @@
 <div class="workspace">
 <aside class="controls card"><h2>运行你的 MATLAB 程序</h2><p>保持原程序的 100 次采样和均值计算。</p><div class="fixed-value"><span>样本数量</span><strong>100</strong></div><div class="fixed-value"><span>标准差</span><strong>3</strong></div><div class="actions"><button id="run" class="primary">生成随机数</button><button id="stop" class="stop" hidden>停止</button></div><div class="load-note"><p>首次运行自动加载约 69 MB 的计算资源，无需安装软件。</p></div></aside>
 <section class="results" aria-label="计算结果"><div id="status-panel" class="status-panel" data-state="idle" role="status" aria-live="polite"><div><strong id="status-title">准备就绪</strong><p id="status-detail">点击「生成随机数」运行程序。</p></div></div><progress id="load-progress" max="100" hidden aria-label="加载进度"></progress>
-<div class="metrics"><div class="metric"><span>样本均值 · mean(X)</span><strong id="sample-mean">—</strong><small>100 个数的平均值，不一定为 0</small></div></div>
+<div class="metrics random-metrics"><div class="metric"><span>样本均值 · mean(X)</span><strong id="sample-mean">—</strong><small>100 个数的平均值，不一定为 0</small></div></div>
 <section class="card trend-card"><div class="chart-heading"><h2>随机数序列 · plot(X)</h2><span class="chart-tag">横轴：样本序号</span></div><svg id="random-chart" viewBox="0 0 720 300" role="img" aria-label="等待生成随机数"></svg><p class="chart-footnote">纵轴为样本值，水平虚线表示 0。</p></section>
 </section></div>
 <section class="source-section card"><h2>MATLAB 源码</h2><p>随机数与均值由下方 .m 文件计算。原程序的 plot(X) 改由网页绘图，其他计算保持不变。<a href="./matlab/untitled-original.m">查看原始文件</a></p><pre tabindex="0"><code id="source-code">正在加载源码…</code></pre></section>

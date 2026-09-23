@@ -1,8 +1,19 @@
-# MATLAB 浏览器热扩散 Demo
+# MATLAB 浏览器数值实验室
 
 独立静态测试网站。用户调整参数后，浏览器通过 RunMat 执行本项目中的 `.m` 文件，显示温度分布、冷却曲线和数值结果。无需安装 MATLAB、登录账户或使用计算服务器。
 
 本项目没有接入或修改旁边的 `matlab-web-demo` 网站。
+
+## 正态随机数程序
+
+`random.html` 执行 `matlab/untitled.m`：通过 `normrnd(0,3)` 生成 100 个样本并计算 `mean(X)`。`sigma2` 虽然是原变量名，但第二个参数表示标准差 3，不是方差 3。原始文件保留于 `matlab/untitled-original.m`；执行版本仅将 `plot(X)` 替换为注释，由网页按返回样本绘图。Worker 读取该脚本正文交给 RunMat 执行，附加 JSON 输出用于传递结果；不在 JavaScript 中重写采样算法。
+
+点击重新生成会获得新样本；无需安装 MATLAB。运行器首次由浏览器自动下载，不等于零下载。随机数不做与 MATLAB 的逐项相等比较，验收独立重算样本均值、检查完整样本与绘图、重复运行、离线计算、停止和失败恢复。
+
+```sh
+python3 scripts/check-browser.py --suite random --browser chrome --url https://makkabakk.github.io/matlab-browser-demo/
+python3 scripts/check-browser.py --suite random --browser webkit --url https://makkabakk.github.io/matlab-browser-demo/
+```
 
 ## 本地运行
 
@@ -27,7 +38,7 @@ npm run preview
 3. 推送到 `main`，或手动运行 **Build and publish browser demo** 工作流。
 4. 工作流安装固定版本依赖、测试、构建并部署 `dist/`。完成后使用 Pages 显示的网站地址。
 
-所有运行资源都随网站一起发布，没有 CDN 或远端计算请求。构建和部署不需要 MATLAB。当前交付只提供项目和发布配置，尚未创建或发布远端仓库。
+所有运行资源都随网站一起发布，没有 CDN 或远端计算请求。构建和部署不需要 MATLAB。仓库：[MAKKABAKK/matlab-browser-demo](https://github.com/MAKKABAKK/matlab-browser-demo)。网站：[正态随机数](https://makkabakk.github.io/matlab-browser-demo/random.html) · [热扩散](https://makkabakk.github.io/matlab-browser-demo/)。
 
 ## 文件与数据流
 
