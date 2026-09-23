@@ -7,11 +7,11 @@ import subprocess
 parser = argparse.ArgumentParser()
 parser.add_argument('--browser', choices=['chrome', 'webkit'], default='chrome')
 parser.add_argument('--url', default='http://127.0.0.1:4173/matlab-browser-demo/')
-parser.add_argument('--suite', choices=['heat', 'random'], default='heat')
+parser.add_argument('--suite', choices=['heat', 'random', 'marginal'], default='heat')
 args = parser.parse_args()
 root = Path(__file__).resolve().parent.parent
 remote = args.url.startswith('https://')
-output = root / 'output' / 'playwright' / (args.browser + ('-random' if args.suite == 'random' else '') + ('-remote' if remote else ''))
+output = root / 'output' / 'playwright' / (args.browser + ('-' + args.suite if args.suite != 'heat' else '') + ('-remote' if remote else ''))
 output.mkdir(parents=True, exist_ok=True)
 cli = ['npx', '--yes', '--package', '@playwright/cli', 'playwright-cli', '-s=' + args.suite + '-' + args.browser + ('-remote' if remote else '')]
 
@@ -24,7 +24,7 @@ def run(*arguments):
     return result.stdout
 
 run('open', args.url, '--browser', args.browser)
-source = (root / 'tests' / ('random-browser-checks.js' if args.suite == 'random' else 'browser-checks.js')).read_text()
+source = (root / 'tests' / (args.suite + '-browser-checks.js' if args.suite != 'heat' else 'browser-checks.js')).read_text()
 source = source.replace('__BASE_URL__', json.dumps(args.url))
 source = source.replace('__FIXTURE_PATH__', json.dumps(str(root / 'tests/fixtures/matlab-reference.json')))
 source = source.replace('__OUTPUT_DIR__', json.dumps(str(output)))

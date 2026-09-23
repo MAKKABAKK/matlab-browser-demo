@@ -1,8 +1,35 @@
 # MATLAB 浏览器数值实验室
 
-独立静态测试网站。用户调整参数后，浏览器通过 RunMat 执行本项目中的 `.m` 文件，显示温度分布、冷却曲线和数值结果。无需安装 MATLAB、登录账户或使用计算服务器。
+独立静态数值实验网站。热扩散与正态随机数使用 RunMat 执行 `.m` 文件；Collapsed MCMC 使用经 MATLAB 对照的 JavaScript 等价实现。全部计算在用户浏览器完成，无需安装 MATLAB、登录账户或使用计算服务器。
 
 本项目没有接入或修改旁边的 `matlab-web-demo` 网站。
+
+## Marginal_FullCollapsed：可调参数的 MCMC
+
+[打开 MCMC 网页](https://makkabakk.github.io/matlab-browser-demo/marginal.html)。可修改样本数 `N`、迭代次数 `ChainLength`、初始 `alpha`、观测方差 `sigmaX2`、均值先验方差 `A2`；原默认值分别为 600、1000、1、1、30。模拟数据仍来自均值 −5/0/5、标准差 1、等权重的三个正态分布。修改模型方差不会改变数据生成标准差。
+
+本页不是 MATLAB 转 Python，也不是直接执行 `.m`：`web/js/marginal-compute.js` 人工等价实现原算法，Web Worker 在用户设备上执行，页面绘制 alpha 轨迹与参考线，列出最终分组的样本数和抽样均值。原始文件完整保存在 `matlab/Marginal_FullCollapsed.m`，包括原始换行，未覆盖用户下载目录中的文件。
+
+选择此实现是因为 RunMat 0.6.2 缺少 `mnrnd`、`betarnd`，且即使维护分组统计量，600 个样本/2 次迭代的 `.m` 测试仍约需 4.25 秒。JavaScript 版本默认完整规模在本机浏览器约 0.1 秒（设备不同耗时不同），本页不加载约 69 MB 的 RunMat 模块。
+
+算法保留逐个分组更新、Gumbel-Max 抽样、alpha 更新和最终均值条件抽样，维护各组人数与总和以省去重复全表扫描。单次等权多项分布用均匀抽样实现；Beta 使用两个独立单位尺度 Gamma 的比值。JavaScript 正态抽样使用 Box–Muller，Gamma 使用 Marsaglia–Tsang（形状小于 1 时提升形状）。随机数流与 MATLAB 不同，日常运行不保证相同样本或路径。
+
+参考线求解原方程 `sum(alpha ./ (alpha + (0:N-1))) = 3`，限定正数根，因此要求 `N >= 4`。原 `fzero(fun1,0.5)` 在 N=4 时可能落入负值奇点，网页使用正数区间二分法修复该边界问题。参考线不是 MCMC 收敛判据，最终分组均值不是全链后验平均；网页保留全部迭代，没有自动丢弃预热期。
+
+验证：四组 MATLAB R2026a 原始全扫描算法的抽样记录被用于逐步回放，检查抽样类型、参数、分组、alpha、均值与参考根；另有正态/Gamma/Beta 抽样矩检验、默认规模和边界参数检验。原始算法参考文件只展开等价的分类/Beta 抽样并将 fzero 限定正数区间。可重新生成基准：
+
+```matlab
+run('scripts/generate_marginal_reference.m')
+```
+
+网页验收（含默认规模、修改全部五个参数、取消、失败重试和手机布局）：
+
+```sh
+python3 scripts/check-browser.py --suite marginal --browser chrome
+python3 scripts/check-browser.py --suite marginal --browser webkit
+# 在线验收：为以上命令追加
+# --url https://makkabakk.github.io/matlab-browser-demo/
+```
 
 ## 正态随机数程序
 
