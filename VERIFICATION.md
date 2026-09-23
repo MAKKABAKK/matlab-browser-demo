@@ -46,3 +46,19 @@
 - 线上报告目录带 `-remote` 后缀，与本地报告分开。测试脚本同样隔离本地和线上会话；建议依次运行，避免同时下载多份运行器影响加载时间。
 
 本案例保留 `normrnd(0, sigma2)`、循环 100 次和 `mean(X)`，其中 `sigma2=3` 表示标准差。执行版本只将 `plot(X)` 改为网页绘图；原始文件另存。随机样本不与 MATLAB 的随机序列逐项比较。
+
+## 2026-09-23：Marginal_FullCollapsed 可调参数网页
+
+- 网址：https://makkabakk.github.io/matlab-browser-demo/marginal.html
+- 原始文件 `matlab/Marginal_FullCollapsed.m` 与用户下载目录中的原文件逐字节一致。发布后的 HTML、计算 JavaScript 和原始 MATLAB 文件与本地构建逐字节一致；首页已经提供入口。
+- 可编辑 N、ChainLength、初始 alpha、sigmaX2、A2，保留原始默认 600 / 1000 / 1 / 1 / 30。页面显示完整 alpha 轨迹、三组参考线以及最后分组的人数和抽样均值。
+- 本页使用 JavaScript 等价算法在 Web Worker 中计算，不调用 Python、不提交远端计算请求、不加载 RunMat。原有热扩散和正态随机数仍使用 RunMat。
+- `npm test` 共 12 项通过：新增四组 MATLAB R2026a 原始全扫描算法记录回放、参数与结果完整性、正态/Gamma/Beta 抽样矩、默认规模和参数边界；保留原热扩散五项检查。
+- 回放基准的 N / 迭代次数分别为 12/8、40/10、4/1、20/5。逐次检查随机抽样类型、Gamma/Normal 参数及输出状态（分组、完整 alpha 轨迹、均值、人数、参考根），使用容差 `1e-8 + 1e-8*abs(reference)`。它验证同一随机输入下的算法对应关系，不声称 JavaScript 与 MATLAB 日常生成相同的随机序列。
+- MATLAB 内另外对比原全扫描与维护统计量版本，12/8、40/10、600/20 三组通过。随机抽样矩检查每个分布使用 120,000 个样本。
+- 本地 Chrome、WebKit 各 30 项浏览器验收通过；GitHub Pages 上两者也各 30 项通过。覆盖默认完整规模、修改参数、再次生成、非法参数、恢复默认、真实后台计算停止、单次迭代、小样本正参考根、手机布局、加载失败后重试、请求同源与无未处理错误。
+- 线上 chrome 在本机执行默认 600 个样本 / 1000 次迭代，纯计算耗时 0.110 秒；耗时不代表所有设备。
+- 线上 webkit 在本机执行默认 600 个样本 / 1000 次迭代，纯计算耗时 0.197 秒；耗时不代表所有设备。
+- 新报告位于 `output/playwright/chrome-marginal-remote/` 与 `output/playwright/webkit-marginal-remote/`。截图已检查桌面和 390px 手机布局。
+- 兼容性差异明确写在网页和 README：分类抽样用均匀随机数、Beta 用 Gamma 比值，参考根用正数区间二分求解。原 `fzero(...,0.5)` 在 N=4 的测试中返回了负值奇点附近的结果，因此 MATLAB 对照参考同样用正数括区间，原始用户文件未改动。
+- RunMat 可行性测试缺少 mnrnd、betarnd，适配后的 600 样本/2 次迭代约 4.25 秒，因而本页采用轻量 JavaScript 移植。未将该页描述为直接执行 `.m`。
