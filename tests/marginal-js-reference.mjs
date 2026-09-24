@@ -1,4 +1,4 @@
-import { validateMarginalParameters } from './marginal-model.js';
+import { validateMarginalParameters } from '../web/js/marginal-model.js';
 
 // Normal: Box–Muller. Gamma: Marsaglia–Tsang, with shape lifting below 1.
 // Injectable draws allow a path-by-path comparison with the original MATLAB loops.

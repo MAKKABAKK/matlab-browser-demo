@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {runMarginal,createMarginalSampler} from '../web/js/marginal-compute.js';
+import {runMarginal,createMarginalSampler} from './marginal-js-reference.mjs';
 import {MARGINAL_DEFAULTS,validateMarginalParameters,validateMarginalResult} from '../web/js/marginal-model.js';
 const fixture=JSON.parse(readFileSync(new URL('./fixtures/marginal-reference.json',import.meta.url)));
 const near=(a,b,label)=>assert.ok(Math.abs(a-b)<=1e-8+1e-8*Math.abs(b),`${label}: ${a} vs ${b}`);

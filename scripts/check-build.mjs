@@ -12,12 +12,13 @@ for (const directory of ['web/js', 'scripts']) {
     if (/\.m?js$/.test(file)) execFileSync(process.execPath, ['--check', path.join(root, directory, file)]);
   }
 }
-for (const file of ['marginal.html', 'js/marginal.js', 'js/marginal-model.js', 'js/marginal-compute.js', 'js/marginal-worker.js', 'matlab/Marginal_FullCollapsed.m', 'random.html', 'js/random.js', 'matlab/untitled.m', 'matlab/untitled-original.m', 'index.html', 'style.css', 'favicon.svg', '.nojekyll', 'RUNMAT-LICENSE.txt', 'THIRD-PARTY-NOTICES.txt', 'js/app.js', 'js/model.js', 'js/worker.js', 'js/charts.js', 'vendor/runmat/index.js', 'vendor/runmat/pkg-web/runmat_wasm_web.js']) await access(path.join(dist,file));
-for (const file of [...SOURCE_FILES, 'Marginal_FullCollapsed.m']) assert.deepEqual(await readFile(path.join(dist,'matlab',file)),await readFile(path.join(root,'matlab',file)));
+for (const file of ['marginal.html', 'js/marginal.js', 'js/marginal-model.js', 'js/marginal-worker.js', 'matlab/Marginal_FullCollapsed.m', 'matlab/Marginal_FullCollapsed_browser.m', 'random.html', 'js/random.js', 'matlab/untitled.m', 'matlab/untitled-original.m', 'index.html', 'style.css', 'favicon.svg', '.nojekyll', 'RUNMAT-LICENSE.txt', 'THIRD-PARTY-NOTICES.txt', 'js/app.js', 'js/model.js', 'js/worker.js', 'js/charts.js', 'vendor/runmat/index.js', 'vendor/runmat/pkg-web/runmat_wasm_web.js']) await access(path.join(dist,file));
+for (const file of [...SOURCE_FILES, 'Marginal_FullCollapsed.m', 'Marginal_FullCollapsed_browser.m']) assert.deepEqual(await readFile(path.join(dist,'matlab',file)),await readFile(path.join(root,'matlab',file)));
 const wasm = await readFile(path.join(dist,'vendor/runmat/pkg-web/runmat_wasm_web_bg.wasm'));
 assert.ok(WebAssembly.validate(wasm), 'Published WASM must be executable');
 assert.equal(wasm.length, 69266559);
 await assert.rejects(access(path.join(dist,'vendor/runmat/lsp')));
+await assert.rejects(access(path.join(dist,'js/marginal-compute.js')));
 const html = await readFile(path.join(dist,'index.html'),'utf8');
 for (const match of html.matchAll(/(?:src|href)="([^"]+)"/g)) {
   if (match[1].startsWith('#') || match[1]==='./') continue;

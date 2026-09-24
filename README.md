@@ -1,6 +1,6 @@
 # MATLAB 浏览器数值实验室
 
-独立静态数值实验网站。热扩散与正态随机数使用 RunMat 执行 `.m` 文件；Collapsed MCMC 使用经 MATLAB 对照的 JavaScript 等价实现。全部计算在用户浏览器完成，无需安装 MATLAB、登录账户或使用计算服务器。
+独立静态数值实验网站。热扩散、正态随机数和 Collapsed MCMC 都使用 RunMat WebAssembly 执行 `.m` 文件。全部计算在用户浏览器完成，无需安装 MATLAB、登录账户或使用计算服务器。
 
 本项目没有接入或修改旁边的 `matlab-web-demo` 网站。
 
@@ -8,27 +8,34 @@
 
 [打开 MCMC 网页](https://makkabakk.github.io/matlab-browser-demo/marginal.html)。可修改样本数 `N`、迭代次数 `ChainLength`、初始 `alpha`、观测方差 `sigmaX2`、均值先验方差 `A2`；原默认值分别为 600、1000、1、1、30。模拟数据仍来自均值 −5/0/5、标准差 1、等权重的三个正态分布。修改模型方差不会改变数据生成标准差。
 
-本页不是 MATLAB 转 Python，也不是直接执行 `.m`：`web/js/marginal-compute.js` 人工等价实现原算法，Web Worker 在用户设备上执行，页面绘制 alpha 轨迹与参考线，列出最终分组的样本数和抽样均值。原始文件完整保存在 `matlab/Marginal_FullCollapsed.m`，包括原始换行，未覆盖用户下载目录中的文件。
+本页现在直接执行 MATLAB 适配版 `matlab/Marginal_FullCollapsed_browser.m`。RunMat 0.6.2 在浏览器 Worker 内加载并执行该文件，所有随机抽样、分组概率、alpha 更新、均值计算和参考根求解均位于 `.m` 中。JavaScript 只负责参数校验、运行器加载、进度与绘图；不调用 Python 或远端计算服务。原始 `matlab/Marginal_FullCollapsed.m` 保留原字节，可在网页切换查看。
 
-选择此实现是因为 RunMat 0.6.2 缺少 `mnrnd`、`betarnd`，且即使维护分组统计量，600 个样本/2 次迭代的 `.m` 测试仍约需 4.25 秒。JavaScript 版本默认完整规模在本机浏览器约 0.1 秒（设备不同耗时不同），本页不加载约 69 MB 的 RunMat 模块。
+首次运行自动加载约 69 MB WASM 资源；正常完成后可复用已加载的运行器。MATLAB 每轮输出 `MARGINAL_PROGRESS`，Worker 订阅输出并回传进度及耗时估算。长链没有固定总时限；加载或单轮连续 3 分钟无进展会报错，可减少样本数重试。停止会终止 Worker，下一次需要重新准备运行器。
 
-算法保留逐个分组更新、Gumbel-Max 抽样、alpha 更新和最终均值条件抽样，维护各组人数与总和以省去重复全表扫描。单次等权多项分布用均匀抽样实现；Beta 使用两个独立单位尺度 Gamma 的比值。JavaScript 正态抽样使用 Box–Muller，Gamma 使用 Marsaglia–Tsang（形状小于 1 时提升形状）。随机数流与 MATLAB 不同，日常运行不保证相同样本或路径。
+**速度限制：**本机 600 样本/10 轮实测约 26 秒，600/1000 可能需几十分钟，不能沿用此前 JavaScript 移植版约 0.1 秒的速度。保留原始默认参数；“填入小规模参数”按钮由用户主动改为 60/20。验收分别覆盖 600/10 的样本规模和 12/1000 的迭代长度，没有把这些测试声称为完成了整组默认 600/1000。
 
-参考线求解原方程 `sum(alpha ./ (alpha + (0:N-1))) = 3`，限定正数根，因此要求 `N >= 4`。原 `fzero(fun1,0.5)` 在 N=4 时可能落入负值奇点，网页使用正数区间二分法修复该边界问题。参考线不是 MCMC 收敛判据，最终分组均值不是全链后验平均；网页保留全部迭代，没有自动丢弃预热期。
+MATLAB 适配保留逐个分组更新、Gumbel-Max、alpha 更新和最终均值条件抽样，维护人数/总和减少重复扫描。RunMat 缺少 `mnrnd`、`betarnd`：等权分类抽样用 `rand`，Beta 用两个独立 `gamrnd` 的比值，全部写在 `.m` 中。使用 `gather` 和额外的数组预分配兼容运行器的驻留数组与标量索引。参考根在正数区间以二分法求解原方程，避免小 N 时原 `fzero(...,0.5)` 落入负值奇点。随机流与 MathWorks MATLAB 不同，不保证日常随机样本相同。
 
-验证：四组 MATLAB R2026a 原始全扫描算法的抽样记录被用于逐步回放，检查抽样类型、参数、分组、alpha、均值与参考根；另有正态/Gamma/Beta 抽样矩检验、默认规模和边界参数检验。原始算法参考文件只展开等价的分类/Beta 抽样并将 fzero 限定正数区间。可重新生成基准：
+参考线不是收敛判据，最终均值不是全链后验平均；保留全部迭代，没有自动丢弃预热期。RunMat 是第三方运行器，不代表完整 MATLAB 工具箱支持。
+
+验证命令：
+
+```sh
+npm test
+node scripts/check-marginal-wasm.mjs
+python3 scripts/check-browser.py --suite marginal --browser chrome
+python3 scripts/check-browser.py --suite marginal --browser webkit
+# 在线验收：为浏览器命令追加
+# --url https://makkabakk.github.io/matlab-browser-demo/
+```
+
+`check-marginal-wasm.mjs` 使用与网页相同的 WASM，执行 MATLAB 适配代码。仅在测试内将随机输入替换为四组 MATLAB R2026a 记录，逐次核对抽样参数、完整结果及每轮进度。此检查也是发布 CI 必须通过的步骤。生产 `.m` 使用真实随机数，不包含回放数据。旧 JavaScript 实现仅作为测试参考保存在 `tests/marginal-js-reference.mjs`，不会发布到网站。
+
+重新生成 MATLAB 基准和原算法对照：
 
 ```matlab
 run('scripts/generate_marginal_reference.m')
-```
-
-网页验收（含默认规模、修改全部五个参数、取消、失败重试和手机布局）：
-
-```sh
-python3 scripts/check-browser.py --suite marginal --browser chrome
-python3 scripts/check-browser.py --suite marginal --browser webkit
-# 在线验收：为以上命令追加
-# --url https://makkabakk.github.io/matlab-browser-demo/
+run('tests/marginal/check_native.m')
 ```
 
 ## 正态随机数程序

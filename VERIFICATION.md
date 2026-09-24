@@ -62,3 +62,14 @@
 - 新报告位于 `output/playwright/chrome-marginal-remote/` 与 `output/playwright/webkit-marginal-remote/`。截图已检查桌面和 390px 手机布局。
 - 兼容性差异明确写在网页和 README：分类抽样用均匀随机数、Beta 用 Gamma 比值，参考根用正数区间二分求解。原 `fzero(...,0.5)` 在 N=4 的测试中返回了负值奇点附近的结果，因此 MATLAB 对照参考同样用正数括区间，原始用户文件未改动。
 - RunMat 可行性测试缺少 mnrnd、betarnd，适配后的 600 样本/2 次迭代约 4.25 秒，因而本页采用轻量 JavaScript 移植。未将该页描述为直接执行 `.m`。
+
+## 2026-09-24: RunMat MATLAB execution
+
+This supersedes the earlier JavaScript MCMC implementation and its timing measurements.
+
+- Production executes `matlab/Marginal_FullCollapsed_browser.m` in RunMat 0.6.2 WebAssembly. The original MATLAB file is retained unchanged. The JavaScript numerical reference is now test-only and excluded from the website.
+- Four MATLAB R2026a random-stream replay fixtures pass against the actual WASM, checking sampler parameters, complete results, and iteration progress. This check runs in deployment CI.
+- Native MATLAB comparisons passed for sample/iteration counts 12/8, 40/10 and 600/20.
+- Local Chrome and WebKit each passed all 34 browser checks, including actual MATLAB execution, parameter changes, runtime reuse, cancellation, mobile layout, and recovery from an injected MATLAB error.
+- Completed browser runs include 60/20, 600/10 and 12/1000. The default 600/1000 was checked for startup, progress and cancellation, not completion.
+- Chrome computation times for those completed runs were approximately 4.96, 38.98 and 86.31 seconds. The full default may take tens of minutes or longer. A user-selected small preset is available; original defaults are preserved.
